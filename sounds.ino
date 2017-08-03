@@ -54,13 +54,9 @@ void playSound(int index) {
       arf();
       break;
   }
-  //
   Serial.println("sound done");
   delay(10);
-
 }
-
-
 
 void SS1() {
   churpSound(1600, 2);
@@ -95,7 +91,6 @@ void SS3() {
 }
 
 void SS4() {
-
   churpSound(3000, 1);
   delay(1);
   churpSound(3500, 1);
@@ -122,7 +117,6 @@ void tickSound2() {
   delay(1);
   digitalWrite(SPEAKERPIN, LOW);    // turn the LED off by making the voltage LOW
   delay(1);
-
 }
 
 void churpSound(int inF, int num) {
@@ -202,7 +196,6 @@ void arf() {    // dog arf
   playTone(12200, 70);       // "ff"   (shorter, hard to do)
 }
 
-
 void routeTone(OSCMessage &msg, int addrOffset ) {
   Serial.print("do tone: ");
   int toneN =   msg.getInt(0);
@@ -212,7 +205,6 @@ void routeTone(OSCMessage &msg, int addrOffset ) {
 
 // play tone on a piezo speaker: tone shorter values produce higher frequencies
 //  which is opposite beep() but avoids some math delay - similar to code by Erin Robotgrrl
-
 void playTone(uint16_t tone1, uint16_t duration) {
   if (tone1 < 50 || tone1 > 15000) return; // these do not play on a piezo
   for (long i = 0; i < duration * 1000L; i += tone1 * 2) {
@@ -230,7 +222,6 @@ void routeNote(OSCMessage &msg, int addrOffset ) {
   int lengthStr = msg.getDataLength(0);
   char strIn[lengthStr];
   msg.getString(0, strIn, lengthStr);
-
   char note =   strIn[0];
   int duration =   msg.getInt(1);
   playNote(note, duration);
@@ -240,7 +231,6 @@ void playNote(char note, int duration) {
   char names[] = { 'c', 'd', 'e', 'f', 'g', 'x', 'a', 'z', 'b', 'C', 'y', 'D', 'w', 'E', 'F', 'q', 'G', 'i' };
   // c=C4, C = C5. These values have been tuned.
   int tones[] = { 1898, 1690, 1500, 1420, 1265, 1194, 1126, 1063, 1001, 947, 893, 843, 795, 749, 710, 668, 630, 594 };
-
   // play the tone corresponding to the note name
   for (int i = 0; i < 18; i++) {
     if (names[i] == note) {
@@ -268,7 +258,3 @@ void beep (int16_t frequencyInHertz, long timeInMilliseconds) {
     delayMicroseconds(delayAmount);
   }
 }
-
-
-
-

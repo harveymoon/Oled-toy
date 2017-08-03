@@ -4,7 +4,6 @@ void setupMqtt() {
   client.setCallback(callback);
 }
 
-
 int strcicmp(char const *a, char const *b)
 {
   for (;; a++, b++) {
@@ -47,7 +46,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     SS4();
     delay(250);
     oled.invert(false);
-    
+
     delay(500);
     ESP.wdtFeed();
     delay(500);
@@ -60,7 +59,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     ESP.wdtFeed();
     delay(500);
     ESP.wdtFeed();
-    
+
     oled.clear(PAGE);     // Clear the screen
     oled.display();
     delay(10);
@@ -74,7 +73,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   delay(100);
   oled.invert(false);
   slowText(s);
-
 }
 
 void reconnect() {
@@ -103,7 +101,6 @@ void reconnect() {
   }
 }
 
-
 void handleSecretMessage() {
   //  Serial.println("def handle secret");
   if (!server.hasArg("payload")) {
@@ -125,21 +122,14 @@ void handleSecretMessage() {
   char destBuf[ DestUsr.length() ];
   DestUsr.toCharArray(destBuf, DestUsr.length());
 
-
   client.publish("postMessage",  charBuf);
 
   //  reconnect(); // mqtt reconnnector
   if (client.connect("User01")) {
-
     String  outMessage = "{'m':'" + pMess + "', 'd':'" + DestUsr + "'}";
-
-    //  client.publish("postMessage", "{'user':'moon', 'msg':" + pMess + ", 'dst': '" + DestUsr + "' }");
-
-
     char charBuf[ outMessage.length() ];
     outMessage.toCharArray(charBuf,  outMessage.length() + 5 );
     client.publish("postMessage", charBuf );
-
   }
   //
 }
@@ -223,27 +213,25 @@ void routeWebCmd() {
     //    Serial.println("drawRect");
 
     //    drawRectAt(XX, YY, WW, HH, c, filled);
-
-
     //} else if ( Mtype.equals("circle")) {
+    
     server.send(200, "text/json", "[\"stat\":\"ok\"]");
   } else if ( Mtype.equals("text")) {
-    //local/cmd?type=text&text=booooop&font=1
+    ///cmd?type=text&text=booooop&font=1
     int font = 0;
     if (server.hasArg("font")) {
       font = server.arg("font").toInt();
     }
     printText( server.arg("text"), font );
-
     server.send(200, "text/json", "[\"stat\":\"ok\"]");
   } else if ( Mtype.equals("flip")) {
-    //    .local/cmd?type=flip&H=1&V=1
+    ///cmd?type=flip&H=1&V=1
     boolean Hval = server.arg("H").equals("0");
     boolean Vval = server.arg("V").equals("0");
     flipScreen(Hval, Vval);
     server.send(200, "text/json", "[\"stat\":\"ok\"]");
   } else if (  Mtype.equals("countdown")) {
-    //.local/cmd?type=countdown&seconds=10
+    ///cmd?type=countdown&seconds=10
     doCountdown(server.arg("seconds").toInt());
     server.send(200, "text/json", "[\"stat\":\"ok\"]");
   } else  if ( Mtype.equals("sound")) {
@@ -251,15 +239,13 @@ void routeWebCmd() {
     playSound(server.arg("index").toInt());
     server.send(200, "text/json", "[\"stat\":\"ok\"]");
   } else if (  Mtype.equals("tone") ) {
-    //.local/cmd?type=tone&tone=1000&duration=1000
+    ///cmd?type=tone&tone=1000&duration=1000
     int toneN =   server.arg("tone").toInt();
     int toneMil =   server.arg("duration").toInt();
     playTone(toneN, toneMil);
     server.send(200, "text/json", "[\" tone\":\"sent\"]");
-
-
   } else if ( Mtype.equals("note") ) {
-    // looks like .local/cmd?type=note&note=C&duration=1000
+    // looks like /cmd?type=note&note=C&duration=1000
     char note = (char)server.arg("note")[0];
     int duration = server.arg("duration").toInt();
     playNote(note, duration);
@@ -271,13 +257,7 @@ void routeWebCmd() {
   }
 }
 
-
-
-
-
-
 void  mqttRun() {
-
   if (!client.connected()) {
     reconnect();
   }

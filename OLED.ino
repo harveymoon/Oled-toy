@@ -1,3 +1,19 @@
+void oled_showIP() {
+  oled.clear(ALL); // Clear the display's internal memory
+  oled.clear(PAGE); // Clear the buffer.
+  oled.setFontType(0);
+  oled.setCursor(0, 0);
+  String str = "";
+  for (int i = 0; i < 4; i++)
+    str += i  ? "." + String(WiFi.localIP()[i]) : String(WiFi.localIP()[i]);
+  str += ":";
+  str += localPort;
+  oled.print(str);
+  oled.setCursor(0, 20);
+  oled.print(String(DeviceName) + ".local");
+  oled.display();
+  delay(5000);
+}
 
 void routePixel(OSCMessage &msg, int addrOffset ) {
   Serial.println("pixel");
@@ -17,7 +33,6 @@ void drawPixel(int x_, int y_, boolean color) {
   oled.display();
   delay(10);
 }
-
 
 void routeFlip(OSCMessage &msg, int addrOffset ) {
   Serial.println("Clear");
@@ -82,12 +97,6 @@ void routeScroll(OSCMessage &msg, int addrOffset ) {
   int stopI =  msg.getInt(1);
 
   oled.scrollRight(startI, stopI);
-
-  // else {
-  //    oled.scrollRight(startI, stopI);
-  //  }
-  //  oled.display();
-  //  delay(10);
 }
 
 void routeScrollStop(OSCMessage &msg, int addrOffset ) {
@@ -99,9 +108,7 @@ void routeRect(OSCMessage &msg, int addrOffset ) {
   drawRectAt(msg.getInt(0), msg.getInt(1),  msg.getInt(2), msg.getInt(3), msg.getInt(4) == 1,  msg.getInt(5) == 1   );
 }
 
-
 void drawRectAt(int XX_, int YY_, int WW_, int  HH_, bool c_, bool filled_) {
-
   Serial.println("Rect");
   int x =   XX_;
   int y = YY_;
@@ -126,7 +133,6 @@ void drawRectAt(int XX_, int YY_, int WW_, int  HH_, bool c_, bool filled_) {
   }
   oled.display();
   delay(10);
-
 }
 
 void routeCircle(OSCMessage &msg, int addrOffset ) {
@@ -237,22 +243,16 @@ void doCountdown(int secondsTo) {
   oled.invert(false);
   SS4();
   delay(250);
-
 }
 
-
-void printTitle(String title, int font)
-{
+void printTitle(String title, int font) {
   int middleX = oled.getLCDWidth() / 2;
   int middleY = oled.getLCDHeight() / 2;
-
   oled.clear(PAGE);
   oled.setFontType(font);
   // Try to set the cursor in the middle of the screen
-  oled.setCursor(middleX - (oled.getFontWidth() * (title.length() / 2)),
-                 middleY - (oled.getFontWidth() / 2));
-  // Print the title:
-  oled.print(title);
+  oled.setCursor(middleX - (oled.getFontWidth() * (title.length() / 2)), middleY - (oled.getFontWidth() / 2));
+  oled.print(title);  // Print the title:
   oled.display();
   delay(1500);
   oled.clear(PAGE);
@@ -261,8 +261,6 @@ void printTitle(String title, int font)
 
 void printText(String text, int font)
 {
-
-
   oled.clear(PAGE);
   oled.setFontType(font);
   oled.setCursor(0, 0);
@@ -276,7 +274,6 @@ void printText(String text, int font)
 
 
 void slowText(String text) {
-
   oled.clear(PAGE);     // Clear the screen
   oled.setFontType(0);  // Set font to type 0
   oled.setCursor(0, 0); // Set cursor to top-left
@@ -297,10 +294,7 @@ void slowText(String text) {
       oled.setCursor(0, 0); // Set cursor to top-left
     }
   }
-
 }
-
-
 
 
 uint8_t bender [] = {
@@ -502,7 +496,6 @@ uint8_t moon [] {
 };
 
 void routePictureCall(int index) {
-
   switch (index) {
     case 1:
       drawBalloon();
@@ -516,13 +509,13 @@ void routePictureCall(int index) {
     case 4:
       drawCat();
       break;
-
   }
 }
 
 void routeBalloon(OSCMessage & msg, int addrOffset ) {
   drawBalloon();
 }
+
 void drawBalloon() {
   oled.clear(PAGE);//clear the screen before we draw our image
   oled.drawBitmap(balloon);//call the drawBitmap function and pass it the array from above
@@ -532,7 +525,6 @@ void drawBalloon() {
 void routeBender(OSCMessage & msg, int addrOffset ) {
   drawBender();
 }
-
 
 void drawBender() {
   oled.clear(PAGE);//clear the screen before we draw our image
@@ -556,19 +548,15 @@ void routeCat(OSCMessage & msg, int addrOffset ) {
 }
 
 void drawCat() {
-
   oled.clear(PAGE);//clear the screen before we draw our image
   oled.drawBitmap(cat);//call the drawBitmap function and pass it the array from above
   oled.display();//display the imgae
-
 }
 
 
-void drawMoon(){
-
-    oled.clear(PAGE);//clear the screen before we draw our image
+void drawMoon() {
+  oled.clear(PAGE);//clear the screen before we draw our image
   oled.drawBitmap(moon);//call the drawBitmap function and pass it the array from above
   oled.display();//display the imgae
-
 }
 

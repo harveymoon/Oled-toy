@@ -9,7 +9,14 @@
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
 
-#include <PubSubClient.h>
+#include <FS.h> // filesystem 
+
+#include <PubSubClient.h>  // mqtt control library
+
+#include <Wire.h>  // Include Wire if you're using I2C
+#include <SPI.h>  // Include SPI if you're using SPI
+#include <SFE_MicroOLED.h>  // Include the SFE_MicroOLED library
+#include <ArduinoJson.h>  // json messages
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -18,29 +25,15 @@ char msg[50];
 int value = 0;
 
 const char* DeviceName = "QQ";
-//"ESP_toy_01";
 const char* mqtt_server = "iot.unanything.com";
-long lastReconnectAttempt = 0;
-long buttonTimer = 0;
-
-
-//WiFiServer server(80);
-char SerialContent[30];
 
 ESP8266WebServer server(80);
 
 // a instance of UDP  to send and receive packets (udp, oviously!;)
 WiFiUDP Udp;
 IPAddress outIp(6, 6, 6, 6);    //ip address of the receiving host
-//IPAddress outIp(192,168,1,26);
-const unsigned int outPort = 9000;              //host port
-const unsigned int localPort = 9999;        // local port to listen for UDP packets (here's where we send the packets)
-
-#include <Wire.h>  // Include Wire if you're using I2C
-#include <SPI.h>  // Include SPI if you're using SPI
-#include <SFE_MicroOLED.h>  // Include the SFE_MicroOLED library
-
-#include <ArduinoJson.h>
+const unsigned int outPort = 9000; //host port 
+const unsigned int localPort = 9999; // local port to listen for UDP packets
 
 //////////////////////////
 // MicroOLED Definition //
@@ -53,21 +46,16 @@ const unsigned int localPort = 9999;        // local port to listen for UDP pack
 //////////////////////////////////
 // MicroOLED Object Declaration //
 //////////////////////////////////
-//MicroOLED oled(PIN_RESET, PIN_DC, PIN_CS); // SPI declaration
 MicroOLED oled(PIN_RESET, DC_JUMPER);    // I2C declaration
 
-#define SPEAKERPIN        D4 // Pin with the piezo speaker attached
+#define SPEAKERPIN D4 // Pin with the piezo speaker attached
 
-#include <FS.h>
 #define DBG_OUTPUT_PORT Serial
-
-
 
 const int buttonPin = D8;     // the number of the pushbutton pin
 
 void setup() {
   pinMode(buttonPin, INPUT);
-
   ESP.wdtFeed();
   Serial.begin(115200);
   WiFiManager wifiManager;
@@ -87,29 +75,11 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
   setupMqtt();
 
-  SS4();
+  SS4(); // a little sound to trigger good connection at this state
 
   oled.begin();    // Initialize the OLED
-
-  oled.clear(ALL); // Clear the display's internal memory
-  oled.clear(PAGE); // Clear the buffer.
-  flipScreen(false, true); 
-  
-  oled.setFontType(0);
-  oled.setCursor(0, 0);
-  String str = "";
-  for (int i = 0; i < 4; i++)
-    str += i  ? "." + String(WiFi.localIP()[i]) : String(WiFi.localIP()[i]);
-  str += ":";
-  str += localPort;
-
-  oled.print(str);
-  oled.setCursor(0, 20);
-  oled.print(String(DeviceName) + ".local");
-  oled.display();
-  delay(100);
-  oled.display();  // Display what's in the buffer (splashscreen)
-  delay(5000);
+  flipScreen(false, true); // do something here if the screen is mounted upside down
+oled_showIP();
 
   SPIFFS.begin();
   {
@@ -126,8 +96,6 @@ void setup() {
   //list directory
   server.on("/list", HTTP_GET, handleFileList);
 
-
-
   //load editor
   server.on("/edit", HTTP_GET, []() {
     if (!handleFileRead("/edit.htm")) server.send(404, "text/plain", "FileNotFound");
@@ -142,13 +110,10 @@ void setup() {
     server.send(200, "text/plain", "");
   }, handleFileUpload);
 
-
   server.on("/sendSecret", HTTP_GET, handleSecretMessage);
   server.on("/cmd", HTTP_GET, routeWebCmd);
-
   server.on("/drawbitmap",  HTTP_GET, []() {
     String Mtype = server.arg("type");
-
     server.send(200, "text/plain", "");
   });
 
@@ -165,7 +130,6 @@ void setup() {
     server.send(200, "text/json", json);
     json = String();
   });
-
 
   //called when the url is not defined here
   //use it to load content from SPIFFS
@@ -188,51 +152,10 @@ void setup() {
   server.begin();
   DBG_OUTPUT_PORT.println("HTTP server started");
 
-
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-  delay(500);
-  ESP.wdtFeed();
-
-
   //  getBTCDisplay();
   //  drawBender();
 
   drawBalloon();
-
-  //  slowText("this is what slow text looks like when you use it to type");
-}
-
-
-void sendMessage(char* serialMessage) {
-  OSCMessage msg("/serial");
-  msg.add(serialMessage);
-
-  Udp.beginPacket(outIp, outPort);
-  msg.send(Udp); // send the bytes to the SLIP stream
-  Udp.endPacket(); // mark the end of the OSC Packet
-  msg.empty(); // free space occupied by message
-  delay(1);
 }
 
 
@@ -261,35 +184,21 @@ int readline(int readch, char *buffer, int len)
   return -1;
 }
 
-
-void routeCommand(OSCMessage &msg, int addrOffset ) {
-  char boo[25];
-
-  msg.getString(0, boo, 25);
-
-  Serial.println(boo);
-
-  delay(10);
-}
-
 int buttonState;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
 void loop() {
-
   int reading = digitalRead(buttonPin);
   if (reading != lastButtonState) {
     lastDebounceTime = millis();
   }
-
   if ((millis() - lastDebounceTime) > debounceDelay) {
     if (reading != buttonState) {
       buttonState = reading;
       if (buttonState == HIGH) {
-        Serial.println("sending a boop");
-        String  outMessage = "{'m':'-', 'd':'heart'}";
+        String  outMessage = "{'m':'-', 'd':'heart'}"; // constructs a json string with message and dest
         char charBuf[ outMessage.length() ];
         outMessage.toCharArray(charBuf,  outMessage.length() + 5 );
         client.publish("postMessage", charBuf );
@@ -297,6 +206,7 @@ void loop() {
     }
   }
   lastButtonState = reading;
+
 
 
   if (Serial.available()) {
@@ -309,44 +219,9 @@ void loop() {
   }
 
   ESP.wdtFeed();
-  OSCMessage msgIN;
-  int size;
-  if ( (size = Udp.parsePacket()) > 0)
-  {
-    while (size--)
-      msgIN.fill(Udp.read());
-    if (!msgIN.hasError()) {
 
-      msgIN.route("/pixel", routePixel);
-      msgIN.route("/clear", routeClear);
-      msgIN.route("/line", routeLine);
-      msgIN.route("/invert", routeInvert);
-      msgIN.route("/rect", routeRect);
-      msgIN.route("/circle", routeCircle);
-      msgIN.route("/text", routeText);
-      msgIN.route("/scroll", routeScroll);
-      msgIN.route("/scrollStop", routeScrollStop);
-      msgIN.route("/flip", routeFlip);
-      msgIN.route("/countdown", routeCountdown);
-      msgIN.route("/sound", routeSound);
-      msgIN.route("/tone", routeTone);
-      msgIN.route("/beep", routeBeep);
-      msgIN.route("/note", routeNote);
-
-      msgIN.route("/crypto", routeCrypto);
-
-      msgIN.route("/bender", routeBender);
-      msgIN.route("/heart", routeHeart);
-      msgIN.route("/balloon", routeBalloon);
-      msgIN.route("/cat", routeCat);
-
-    }
-    outIp = Udp.remoteIP();
-  }
-
+  handleOSC();
 
   server.handleClient();
-
   mqttRun();
-
 }
