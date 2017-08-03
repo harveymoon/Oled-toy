@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>ESP Toy</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<style>
+
+@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400);
+.highlight {
+  font-weight: 400;
+  text-align: left;
+  font-family: Ubuntu Mono,monospace!important;
+  white-space: pre-line;
+  line-height: 1.2rem;
+  color: #4a4a4b!important;
+  background: #f0f0f0;
+  font-size: 0.7rem;
+  font-family: monospace;
+  display: block;
+  padding: 0.5rem;
+  width: 100%;
+  word-wrap: break-word;
+}
+body {
+    background: #222;
+    padding: 1em;
+    margin: 0;
+    font-size: 16px;
+    color: #777;
+    width : 600px;
+}
+    body * {
+        margin: 10px;
+        padding: 10px;
+        font-family: helvetica, sans-serif;
+    }
+p {
+    margin: 0 0 1em;
+    font-size: 14px;
+}
+
+input{
+      -webkit-appearance: button;
+}
+
+form{
+    padding: 0;
+    margin: 0;
+}
+a{
+ text-decoration: underline;
+ cursor: pointer;
+}
+font{
+  margin:0;
+   padding:0;
+}
+
+</style>
+
+<script type="text/javascript">
+
+var stringMyName = "";
+  
+function copyToClipboard(element) {
+  var $temp = $("<input>");
+  $("body").append($temp);
+  $temp.val($(element).text()).select();
+  document.execCommand("copy");
+  $temp.remove();
+}
+
+
+function setHostname() {
+    var hostname = document.documentURI;
+    
+    hostname = hostname.split('://')[1].split('.local')[0];
+  stringMyName = hostname+".local";
+    // document.getElementById("cmdScript").innerHTML =STR;
+
+    x=document.getElementsByClassName("myStringName");  // Find the elements
+    for(var i = 0; i < x.length; i++){
+    x[i].innerText=stringMyName;    // Change the content
+    }
+}
+
+function openEdit() {
+  var win = window.open(document.documentURI+'edit', '_blank');
+  win.focus();
+}  
+
+function httpGet(theUrl)
+{
+    var xmlHttp = new XMLHttpRequest();
+    console.log(stringMyName+theUrl);
+    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+    xmlHttp.send( null );
+
+    return xmlHttp.responseText;
+}
+
+
+function sendMessage() {
+    var msgbox = document.getElementById("msg");
+    var dstbox = document.getElementById("dst");
+    var text = msgbox.value;
+    var dest = dstbox.value
+    msgbox.value = "";
+    console.log('send message ' + text );
+    console.log('to dst ' + dest );
+    if(text != ''){
+       httpGet("/sendSecret?payload="+text+ "&dst="+dest);
+    }
+   
+}
+
+
+</script>
+
+</head>
+<body id="index" style="margin:0; padding:0;"  onload="setHostname()">
+
+<div align="LEFT" >
+
+<h3>
+HELLO
+</h3>
+
+
+
+<code align="LEFT" class="highlight">
+color = 1 or 0
+fill  = 1 or 0
+res 64x48
+send OSC to <font class="myStringName"></font>: 9999
+
+<font class="myStringName"></font>/info
+
+</code>
+
+
+Send message:
+<br>
+
+msg:<input id="msg" type="text" name="msg" value="">
+dst:<input id="dst" type="text" name="dst" value="*">
+<button onclick="sendMessage()">Send</button>
+<br><br>
+
+
+
+<h3>
+List, upload and edit web files:
+</h3>
+
+
+<button onclick="openEdit()">EDIT WINDOW</button>
+
+<h3>
+Upload Directly. Go to directly, run script:
+</h3>
+
+
+<button align="LEFT"  onclick="copyToClipboard('#cmdScript')">Copy script</button>
+
+<code align="LEFT" class="highlight" id="cmdScript">
+  for file in `ls -A1`; do curl -F \"file=@$PWD/$file\"   <font class="myStringName"></font> .local/edit; done
+
+ </code>
+
+<br>
+
+<h3>
+API
+</h3>
+
+<code align="LEFT" class="highlight" id="cmdScript">
+COMMANDS:
+
+
+/pixel  x y color
+<a onclick="httpGet('/cmd?type=pixel&x=5&y=35&c=1')"><font class="myStringName"></font>/cmd?type=pixel&#38x=5&#38y=35&#38c=1</a>
+
+
+/clear
+<a onclick="httpGet('/cmd?type=clear')"><font class="myStringName"></font>/cmd?type=clear</a>
+
+
+/line  x1 y1 x2 y2 color
+<a onclick="httpGet('/cmd?type=line&xy=5,45&xy2=50,20')"><font class="myStringName"></font>/cmd?type=line&#38xy=5,45&#38xy2=50,20</a>
+
+
+/invert bool
+<a onclick="httpGet('/cmd?type=invert&val=1')"><font class="myStringName"></font>/cmd?type=invert&#38val=1</a>
+
+
+/text str x y font[0-3]  * fonts 2+3 limited to digits
+<a onclick="httpGet('/cmd?type=text&text=booooop&font=1')"><font class="myStringName"></font>/cmd?type=text&#38text=booooop&#38font=1</a>
+
+
+
+/flip vert[bool] horz[bool]
+<a onclick="httpGet('/cmd?type=flip&H=1&V=1')"><font class="myStringName"></font>/cmd?type=flip&#38H=1&#38V=1</a>
+
+
+
+/countdown int[seconds]
+<a onclick="httpGet('/cmd?type=countdown&seconds=10')"><font class="myStringName"></font>/cmd?type=countdown&#38seconds=10</a>
+
+Sounds:
+
+
+/sound index[1-14]
+<a onclick="httpGet('/cmd?type=sound&index=3')"><font class="myStringName"></font>/cmd?type=sound&#38index=3 </a>
+
+
+
+/tone sound[50-14500] length[ms] *tone-shorter values produce higher frequencies
+<a onclick="httpGet('/cmd?type=tone&tone=1000&duration=1000')"><font class="myStringName"></font>/cmd?type=tone&#38tone=1000&#38duration=1000 </a>
+
+
+
+/note ['c','d','e','f','g','x','a','z','b','C','y','D','w','E','F','q','G','i']  length[ms]
+<a onclick="httpGet('/cmd?type=note&note=C&duration=1000')"><font class="myStringName"></font>/cmd?type=note&#38note=C&#38duration=1000</a>
+
+</code>
+
+
+
+<br>
+
+
+
+
+<h3>
+OSC MESSAGES
+</h3>
+
+<code align="LEFT" class="highlight" id="cmdScript">
+
+OLED:
+
+/pixel  x y color
+/clear
+/line  x1 y1 x2 y2 color
+/invert bool
+/rect x y w h color fill
+/circle x y r color fill
+/text str x y font[0-3]  * fonts 2+3 limited to digits
+/scroll start[0-5] end[0-5]
+/scrollStop
+/flip vert[bool] horz[bool]
+/countdown int[seconds]
+
+Sounds:
+
+/sound index[1-14]
+/tone sound[50-14500] length[ms] *tone-shorter values produce higher frequencies
+/beep Hz[20-5200] length[ms]
+/note ['c','d','e','f','g','x','a','z','b','C','y','D','w','E','F','q','G','i']  length[ms]
+</code>
+
+
+<br>
+
+
+<h3>
+Max Patch example of OSC commands:
+</h3>
+
+<button align="LEFT"  onclick="copyToClipboard('#maxpatch')">Copy Max Patch</button>
+
+ <pre align="LEFT" class="highlight"><code id="maxpatch">
+
+----------begin_max5_patcher----------
+4724.3oc6cs0aiqaD94r+JDLReaOmx6jpuUz6.s.En.8kdJBbrURTqhjqr7t
+Imh9euRZn7kDKaJJYQ5DcVbR1U1NYlONyvgyM9e+xMytO6kn0yB9UA+ifat4
++9kato9QUO3F8+9lYOO+kEIyWW+1lkF88r6+Wy9J7REQuTT+30AEYQqW077U
+4QqiRKlWDmkdWdzhB3WAlfU+H+qATJ6GQeM.o+Rv+r4iMuXwSwoOd3GQV81n
+Tb02XgUekP16Ckt443zjnhZ5CqeX7xZxpjT+AhfNa2aMaSQy6Eoe55hWShpe
+6ypdv+6Keo5Ke0P.44n0qm+Xz6Pje4h4EMOD9kV75pHfolMaGK2JRIpQJDs5
+aFhT7ZjBgfO4oQJxwPJ1wQJ7ffTFJ5bDNCWtry6mL.wIx.2OOIIKK0D4fix1
+RXkrdAkSsXAEeIWPakseJZddgkLMRJ2SJlg6NSyU9oTbCmYuTLOzMRwQoKix
+sc8rzP1t0StMqmBOc8TyY8X8T5lclxecUQlsqmzZ6PLFuV+TZw5omtKSCmIE
+Vudxujqmk+Lu+TpgeMX18ySe7jKeJTMOJoppuwQVvijcXX97miJhxuKJc98.
+igNJ+Stz1mhVEbKtjcP1ITKBqWrkRbkLsxBaTrvKoL8hrmetzIw2w4Ojs6gs
+4Ho.1zIjarejBvMxvZvfV+OHntHhvtnl0ZCLVWjeVr.3Lhx3Sez7IDViEBWf
+Eu754fBd8IvHJgwhEbvTupF7rBJ3NY2tzrhnf3Ry6nddbrRFVfMWzgfpgXIp
+9cKrXiRF0IduWCX+ggAv3gntBXBIA1hxB.i4N.6+zS.Cig8fP3N.XfPIs9aR
+K11hxcGf86GF.SHBMFvvf5qT6DjM.lvc.1uaf.LFsq.l.N4JnX1Q.S5N.66C
+DfgYcFvXJasgQUtCv9sCCfwUhNCXDj0.Vn6.rW6Ifgv.aiHc.vpiEJWApjVD
+kWJxc.1uYX.Lgzb2JPD.ov1KggcGfc+.AXLVWALghY8tjD2AX+7.AXPxT5Df
+w4VqR5PO8mOL.l1fTm.rFMSK.LG5o+K8CvBw7t5nuFu3gTaEvHNbSxGGD7pC
+l7CI78s3ag3EwgNg8PegKQGM3qgKs8daBTAwgN4G0W3R1Qy8Mvk1ZuMRWN7P
+jKMEtZmws2pMwggaXQeXbReM+5Co753J.JctO3HSiD7geBaxSF4hVMF2uon3
+D0bw4yQln1PHFEBI5r4qcf+byAFpyCVoTtoIBqEABpN5XFuAhHDCeh5uorXC
+Djxc.Fef.Lgh1Q.SnPVCXgtCvTCEfw6pDlfasDFF4PUxgRmTPQcEwfMqCsHp
+GXGZDizaDSh3czJFWP2yJVHyBDi3NDiNTHVGLioQLsYLqPLp6PL1fgX7vthX
+bg0Hl+5IYiJmHzTOIaT4DBa8jDycTEQV43vfI.YtY8FAHsYcaDfDtnRkJcHO
+JX8SY4EQ4Aeadxln0AqxyVtYQTvSwO9T4SeHO5+rIJcQbz5STkdDIjSNnpJH
+BR2qCED2EkjSsHSCO95eJ8OFkW7yAAEwOG8mR+KwIIwqiVjkt7TLOGrazv7T
+oELO1IJL0q+8VegGB5KBi0WXHcvJpyxnp65K3P2DrlZ.iOT.FIri.l.7w1J.
+S5N.SMT.Fh2U.iauDlxc.FdnzI4RQWQLnIvBQVfXgtCw5+QS37515QnLNo+5
+M8zVwBwVfXL2gX8+nIbnhcEbTGQLsYLqPLt6Prtbzj14cvUQq3cpW1gFMpAV
+ebAbHwcd+vGjEUsQSaVTwtvw+eeR7pf+XVd7OmUpWmbhUWARWY40hsPYl2Ie
+awpPW3XeMG92K8lOdgQ7mtFTYVveWz9pnE0xUAk+lVswx14jSgN2UAEFnEdG
+oL2+68IinbMqp40al8PbRz2hxWWt0xde9alMe0p8d7M68Qp.n+UV8OH4W29n
+3T3QzsOJO5awu8Ga4O27RvnnDI1jCz2KaYkpeLYKixS2DW+YfGVtT8klefM3
+2tM7Dr5uwT6IxTtj9XR1h+czx8DCJWhVEkFmt+doG7xKidX9ljh6p5dn0w+b
+Mwgq7E4Hu9CyWD05GNc9y.m8qyi2J5eyrGyiWlkVQDGfyUOt4WWU6jTmiM99
+LS86Hc9pi7gKEEJwjVdw0kL4l02OOuZYP2HZjlWrHKK4vWZ6mKI5gB8KuJNM
+8MnXQ1p1ew73Ge5De16yJewmO0O65WY8caRgW8tR0vh6VO+aGh1kVLSz5kG9
+i+k4owOOuHpJ7A0rKZ6KBMi2SqWjmkjb.+Bux2NxqrrTBdQz2iWV7T8un8EF
+Je6wqZDhlscUdY7iQqKN7YEyeb8gO4cZmkOZy8ZMz6JhddURIWb3a3fYRw9p
+i6aA6fmex8geydwOTYt9Vbvsj8e81sp0pksZ0QLTM.h2kekVMt8NCbaq8u1M
+xcLq62zXgWa5vRr5fjkaPByaCNj5blCmli0701gCbKvw1JUyIvwAaB9lMBmu
+3eGfBPChXCzCFP37rSrg3TwlZ56jHQboqRlAFvFazsescr.0BVn5NVr2Sabr
+yOwHEefvHlOhQ.QLyDwDBmXJFzlsEEucL.0aLXmiLIwossCVM6U85GGbVmsI
+eQi3wV6gAGxqk6IWDmt0wt+wdVDdy67o3kKiReK6sLdcki.fKIFsX1cplZJU
+S8HpVQuFw5JMaCo5vqRptBqw9AUSMVBoxVyff0A+yur+oCmUcHgk2AGH5t4E
+E4wk9vAla1+3tcxw8xSQd+7Dsa4aOV2o7hemq9eYG8NLQbnH39f0mt7M+pYg
+cfQnvbCq6QJT0RjBuvixj5SmryIS6h1BC1ojaQlUTtonup9aA+zrRUc1OMqj
++wATKCSJDmIHFaXd2aXYrLzAw9dU.bn7+b1iwKrjygpVlQqStjTZAmKmhz1T
+j1lhz1Tj1Fhvkrdw7jnRS47x+LLwLgRpsrEd9XlHZ47eRrmFaoADrvf2NCAZ
+gbIZcxf3BJVA2RBtE2S3BZWRrp1yII29.xIB+HDGWLzqaCPfbERONPtCiPi.
+FQd8HJtBteGE2QKDtR10YHbMPgpVHY.PH9Ua.b05KDX9Z1mH3JEWeQvsxPnY
+wLRv8m3ycDZoMp1ihpXkGdWeXckmVcfp8jXgJMNBtGYUwcTs4x0xqQp9HxRt
+yFhw4tpxt9TzxOYnCyWmDu2X3uI.OhlHHb7IB9YJpTNrgb89xP04g6VPCE92
+3.eQ1lzhkYeOMfaWnTkPnToP1CTVDD4K68twPLH3kP+pvvv0xP2GD7XAxUq7
+sUItKxRxN2L.W.tiG104dsfZ4D.G210Qhim.3B3r8l2JcMC.7PqAB2baWTts
+T5xcwIpq1Bz5Iv0cgn6yQAL2OalhFFy5a6Bba2iGHGyXZq2PeDXCiQcy0riN
+nlHa21pICfRcKh2cQUpedS6zjVaE15UTzkbEsH6wGShZcQa+p76nrmjAlToG
+Ojqmm81M+8LeqXrOw5P95sh04th0Oid7eqHakc5wTnu9azisHS9W14Ol88uG
+XfhC8+qM5w3Pe+BVBifqJF31ywF+pw8vu5R1I94MOuWQSTUEEMOxOFudGb+g
+YiJOxEUnSd4unnf5+o0G2lt+EqjvhV3DIujEkVa50qxKMi+PftHs9oeZ1uXc
+0WC9EIKa9eaMzA0YSclpwxyzbfriAHDGHJTjs90muOKwRlFpmeXGOtE1.QWT
+i6UbYzx32efR7dyb6iJ5WsW+WMWK.tRspxNl9TnFi.gV3sSivy175Pb6VgMy
+XT3ZYyhsBCwd4guz0eIy1c3ursvs0rkPWBwfVqM7kxK4KsYndvWRujuTgacg
+1N0KkvOUuX0mWpGqWbGvW4GxW13jf9p47bW2rnivw94sMqtzzsegj56mDBlK
+T56KRKNHz1R8nemChIuTGDZH.IZeAI4f.RhK1oEMKWMGAX.UcksWBsRpax5B
+477D2Zdh3FdBeddBaaVgjXWvSmS5iCQmPIsjqDNYRD8PbRx4YJcAIR59.HRh
+bAW88mNOOA4kylEJWmb1iwRhF1vNVxI2914yWFu4TytVIMb2Huf0cgOgv6Vo
+zrj8qTbez1mlqf4NgMbEyCs8oYJ8ETpE19DTONChRXzxorMAh6xj+UV9C0L9
+gKqchycV5CGhSOnGgrblkmdfKcUIb0ZeP+xq+P9OTah5G1WktawLPGtNLbCU
+oDmFX3GAXTelaEZnxfvH1T2PO0MzScC8vzxpKhyWjDASdvfaoA2xBtk2uVKi
+B5oRniMI126pB70+rjCqC4ee6ytOviRNrtjO6KDQ9n1plX5vzLq9H9LTMHtd
+XLz+9C2qmymrl+LHVnYv0VnA8IN+3fk5JuKwgKK39a3A+A0xCkLL3C8ZeFep
+mQ912g3D1UWChKLsmkILuo0NUFRxB+oyeMcxMVwZL+n+YC6.I6GfLgd8Qx3N
+Px9Qq2S5.ES8CQ4NPwjqJyEX+Y5WPt9HY7UHJO5z7G3I.7vkDDHKr1jDjvOA
+0Yl9BC1ZPRf775Lq8oAAD2UJu7PVAXZ4N339kTIHw3GIbqms+ctrSEh91Jl5
+LibP0A0kToxBuJRh7wmFBgPaVJXFe0kCvETgX1fVzqmDOebHCifABAFIMEzX
+pvc2VRVXEhw9vYptMrEg6J1BlmrGa4dtE9SUx.e+oNVy.sXE.5WDrvbTWOo4
+gIAZ3YZOAwQf8O0WugP+ONUoASUZvTkFLXUZPk50apyffaE8KAELnFCfgEDl
+xrtTCXjq+RMfPGl6jM1G3RM3yc0XLUJFSkhwToXLvkhwfVLFgBquXLlJFioh
+wXpXL9fVLFLxG2hw3H7lqHY10Wd+XcHE17oJdYphWlp3koJd4ZphWH3o5GYp
+Jc7hZgZphWLH6q3tkwZcxWstDPXxOIIeMDlbUc.Y0SGPqQV00Zw0TmpALI.K
+KEHq+K1VcMMIRMjzRFFNa00vHdb00PgrAJCssbQPWoSnALLYnfqOEKXbZ3UJ
+i2LBJgKXGa3bk2MY6iS+VTdg02kJMPhdlMg5rJNk66WqRDXSVtsS+cJ4SPwn
+Rf8KsGjnWwkpztIJUGucWfQ+pdllbtIF5QloIjoJMZpRilpznoJMZ3pznpPH
+bQlnIPwuhs+hUmNMQSlpgloZnYpFZlpglowYxTEzLUAMSUPyXUAMzOviyD5z
+3L4S0DUXpdTlpGko5QYpPIlFmISE2w3lAIHsoVjbDh7ySFjrGjtZq3h5PthK
+WdBngkZi39kLI8rLAK5dpXcwULdcBzN39KoarMbo6oSgFLoDZmooGQrg+YNE
+ZUkx.TCKSoPaJEZSoPaPRg1p3WhR1lCs9E1McrrgBqQEZcxyje.xc1TtOlx8
+Aj6Cb4wYGFEKRsaRBCx6AcJuGS48XJuGepx6g7iaZOjWcAXyihh4T73mRTyT
+rhmhU7Epa0jLHNVBS6VsPnUbrMzogeR5BPgBsKDylfqTYuvUL4ZMjzPHL3R6
+CGMSt2j0VE14fQKm4htgZQRzbKCDsRvfP0Ppalit2ITBGD88MKWUpnrL3282
+9q2Uj85cH7OljsXdRPX4+ch6daHWMJn0KzKxcKaM1b0aW+S+P+6Ad+sa5oQf
+2uYm3.G0ayadwA9289s4d+Vbua0vbJBaDEQFOJhqLgh3giHEILhhjiHEYjbT
+0MQ9HQQJiHnQDfHlPOrQTH5M+tZghv7QjhnlPQjQbUiw7MJhx8NJR3cTjz6n
+Hj2QQgdGEo7NJB6cTDw6nHuylM06rYS7NcMh2oqQ7Na1DuaeMh2s2Ow+z0Lw
+lsX7nGrv27xFy7NJh5cTDw2nHjx6vHr2gQd2IZwHOihvglHGgCIiHEI8NJJz
+6nHg2QQLuih3dGEQ8NJB6aTjQ9zhUhQjhjFSQ3wghTFo8qFwUMEwHJBOxTD1
+HJZrV0LRW6MQF7hRQRS1WSMdof.iLRLplrGmEMiR0mX7DhXln4yHiF8Xj0Z4
+3QNl.OzQTm2nnOfwinJlvLUL4HSQXinnQZUSZzN9zQbGegY6cLlxQlbRVLe7
+JTj296pMJhMdTjQYBcT09MJ9CXj+QQj8moHWTJRJLlfHiCAIMlfFIqQHrwTz
+X43XnmQQFtnMdJZFJVOlN6aFDMdmYzr.OhFOWiLYIKb7vGibBQoFM5gYhqrp
+wa4xnRwZDibkQkqhZ7x0fIpWpwygQiJQUtZzb7fyMkdXiC8HMkdFG+fL5DG7
+wy7COzT5YjhMjIzSc.j3iC8HMkdFI7QYJ8LRaewMkdFG8Kips4Z5YbrGZT0e
+WSOii8PlQ4te7nGypXW9nI+XT85RGO2MLq1XGO4YypL1wSe2rZ9bDKMNoozy
+3regwpWiUtDLkdrY4B5bv2LJ9pHk2LB9dy3268idu1G6ducj6U9a9+8k+ODf
+n9ZE
+-----------end_max5_patcher-----------
+</code></pre>
+
+
+
+</div>
+
+</body>
+</html>
